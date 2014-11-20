@@ -61,6 +61,7 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 <h3>2014-11-08 Стандартное отклонение распределения выборочных средних (ЦПТ)</h3>
 <p>По идее, оно должно быть SD_выборки/sqrt(N_выборки) и не меняться с количеством повторов эксперимента. Эксперимент - это случайная выборка из N_sample элементов. Соответственно, мы повторяем этот эксперимент разное количество раз.</p>
 <pre class="r"><code>set.seed(20140811)
+
 N_sample = 30
 N_exp = c(10,50,100,200,500,1000,5000, 50000)
 
@@ -101,6 +102,38 @@ do.call(rbind,res) # Должно быть в районе 0.95</code></pre>
 ## [7,] 0.9468
 ## [8,] 0.9499</code></pre>
 <p>Да, покрытие примерно 95%.</p>
+</div>
+<div id="---dplyr----------any--if" class="section level3">
+<h3>2014-11-08 Эксперименты с %&gt;% и dplyr - интересно проверить, как он будет вести с any и if</h3>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>df = data.frame(a=1:5,b=5:1)
+
+any(df$a&lt;6) # должно быть TRUE</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>df$a&lt;6 %&gt;% any() # так не работает</code></pre>
+<pre><code>## Warning: coercing argument of type 'double' to logical</code></pre>
+<pre><code>## [1] FALSE FALSE FALSE FALSE FALSE</code></pre>
+<pre class="r"><code>df$a&lt;6 %&gt;% any # так не работает </code></pre>
+<pre><code>## Warning: coercing argument of type 'double' to logical</code></pre>
+<pre><code>## [1] FALSE FALSE FALSE FALSE FALSE</code></pre>
+<pre class="r"><code># оказывается проблема в приоритете операций
+(df$a&lt;6) %&gt;% any() # так работает, правильное TRUE</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code># тест if - шансов мало
+# (df$a&lt;6) %&gt;% any() %&gt;% if() df$d=0 else df$d=1 # оно и не работает...</code></pre>
+<p>А общая идея была, чтобы можно было писать проверку в виде цепочек. Типа: df %&gt;% check(a,1:5) %&gt;% corr(99) # то есть, наверное и так можно сделать, надо только функции доработать</p>
+<p>Сложный вопрос - надо как-то получать имена переменных в номральном виде, как select в dplyr. Наверное, этот select и надо использовать. Типа, сначала запускаешь выделенное до corr, получаешь список ошибок. Потом, если запускаешь с corr, то будет исправление. Вместо corr, наверное все-таки clean - чтобы не путать с корреляциями. По пути надо таскать с собой атрибуты - текущая проверка, текущие переменные для условий. Хотя, может и лучше зафиксировать их раз и навсегда. Сделать в пакете константы. Надо как-то еще переменную id передавать.</p>
+<p>Самая засада - надо бы удобный просмотрщик ошибок. И, может быть, набор алгоритмов исправления…</p>
 </div>
 
 
