@@ -72,15 +72,15 @@ res = lapply(N_exp, function(N){
     })
 
 do.call(rbind,res) # две последние колонки должны быть примерно равны</code></pre>
-<pre><code>##            mean     sd sd_exper
-## [1,] -0.0486667 0.1469   0.1826
-## [2,]  0.0007218 0.1955   0.1826
-## [3,]  0.0042951 0.1852   0.1826
-## [4,] -0.0087413 0.1846   0.1826
-## [5,]  0.0046832 0.1773   0.1826
-## [6,]  0.0055732 0.1857   0.1826
-## [7,]  0.0017323 0.1833   0.1826
-## [8,]  0.0003897 0.1837   0.1826</code></pre>
+<pre><code>##               mean        sd  sd_exper
+## [1,] -0.0486666838 0.1469058 0.1825742
+## [2,]  0.0007218363 0.1955208 0.1825742
+## [3,]  0.0042951360 0.1851524 0.1825742
+## [4,] -0.0087413206 0.1845545 0.1825742
+## [5,]  0.0046832277 0.1772565 0.1825742
+## [6,]  0.0055732114 0.1856858 0.1825742
+## [7,]  0.0017322881 0.1833313 0.1825742
+## [8,]  0.0003897034 0.1836670 0.1825742</code></pre>
 <p>Да, действительно не зависит от количества повторов. Впрочем, это было очевидно уже при написании программы. Заодно проверим покрытие - будет ли выборочное среднее в 95% случаях лежать в интервале +/-1.96*SD_выборки/sqrt(N_выборки).</p>
 <pre class="r"><code>N_sample = 30
 N_exp = c(10,50,100,200,500,1000,5000, 50000)
@@ -92,15 +92,15 @@ res = lapply(N_exp, function(N){
     })
 
 do.call(rbind,res) # Должно быть в районе 0.95</code></pre>
-<pre><code>##        [,1]
-## [1,] 1.0000
-## [2,] 0.9200
-## [3,] 0.9100
-## [4,] 0.9650
-## [5,] 0.9440
-## [6,] 0.9530
-## [7,] 0.9468
-## [8,] 0.9499</code></pre>
+<pre><code>##         [,1]
+## [1,] 1.00000
+## [2,] 0.92000
+## [3,] 0.91000
+## [4,] 0.96500
+## [5,] 0.94400
+## [6,] 0.95300
+## [7,] 0.94680
+## [8,] 0.94988</code></pre>
 <p>Да, покрытие примерно 95%.</p>
 </div>
 <div id="---dplyr----------any--if" class="section level3">
@@ -109,9 +109,9 @@ do.call(rbind,res) # Должно быть в районе 0.95</code></pre>
 <pre><code>## 
 ## Attaching package: 'dplyr'
 ## 
-## The following objects are masked from 'package:stats':
+## The following object is masked from 'package:stats':
 ## 
-##     filter, lag
+##     filter
 ## 
 ## The following objects are masked from 'package:base':
 ## 
@@ -121,19 +121,92 @@ do.call(rbind,res) # Должно быть в районе 0.95</code></pre>
 any(df$a&lt;6) # должно быть TRUE</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <pre class="r"><code>df$a&lt;6 %&gt;% any() # так не работает</code></pre>
-<pre><code>## Warning: coercing argument of type 'double' to logical</code></pre>
+<pre><code>## Warning in any(.): coercing argument of type 'double' to logical</code></pre>
 <pre><code>## [1] FALSE FALSE FALSE FALSE FALSE</code></pre>
 <pre class="r"><code>df$a&lt;6 %&gt;% any # так не работает </code></pre>
-<pre><code>## Warning: coercing argument of type 'double' to logical</code></pre>
+<pre><code>## Warning in any(.): coercing argument of type 'double' to logical</code></pre>
 <pre><code>## [1] FALSE FALSE FALSE FALSE FALSE</code></pre>
 <pre class="r"><code># оказывается проблема в приоритете операций
 (df$a&lt;6) %&gt;% any() # так работает, правильное TRUE</code></pre>
 <pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>(df$a&lt;6) %&gt;% any # так работает, правильное TRUE</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 <pre class="r"><code># тест if - шансов мало
+
 # (df$a&lt;6) %&gt;% any() %&gt;% if() df$d=0 else df$d=1 # оно и не работает...</code></pre>
 <p>А общая идея была, чтобы можно было писать проверку в виде цепочек. Типа: df %&gt;% check(a,1:5) %&gt;% corr(99) # то есть, наверное и так можно сделать, надо только функции доработать</p>
 <p>Сложный вопрос - надо как-то получать имена переменных в номральном виде, как select в dplyr. Наверное, этот select и надо использовать. Типа, сначала запускаешь выделенное до corr, получаешь список ошибок. Потом, если запускаешь с corr, то будет исправление. Вместо corr, наверное все-таки clean - чтобы не путать с корреляциями. По пути надо таскать с собой атрибуты - текущая проверка, текущие переменные для условий. Хотя, может и лучше зафиксировать их раз и навсегда. Сделать в пакете константы. Надо как-то еще переменную id передавать.</p>
 <p>Самая засада - надо бы удобный просмотрщик ошибок. И, может быть, набор алгоритмов исправления…</p>
+</div>
+<div id="--svd------" class="section level3">
+<h3>2014-12-21 Эксперименты с SVD-декомпозицией, анализом главных компонент и ковариацией</h3>
+<pre class="r"><code># создаем случайную матрицуу размером Nxp
+
+N = 100
+p = 10
+
+set.seed(20141221)
+dat = matrix(rnorm(N*p),nrow = N)
+
+weight = runif(N)
+# вычитаем  центры из каждой колонки - без этого ничего не будет
+
+dat = scale(dat,center = TRUE, scale= FALSE)
+stdev = apply(dat,2,sd) # вектор стандартных отклонений
+
+all.equal(
+    sqrt(sum((weight - mean(weight))^2)/(N-1)), # N-1 тоже под корнем!
+    sd(weight)
+    )</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>all.equal(
+    sum((weight - mean(weight))^2)/(N-1), # стандартное отклонение - тупо корень из вариации
+    var(weight)
+    )</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>all.equal(
+    cov(dat),
+    var(dat)  # а вот функция для вариации почему-то определена совсем не так, как стандартное отклонение
+    )</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>all.equal(
+    diag(cov(dat)),
+    (apply(dat,2,sd))^2 
+    )</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>all.equal(
+    t(dat) %*% dat/(N-1),
+    cov(dat) # ковариация считается довольно просто
+    )  # cov(X) = t(X) * X / (nrow(X) - 1)  # только для центрированных переменных</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>all.equal(
+    t(dat) %*% dat/(N-1)/(stdev %*% t(stdev)),
+    cor(dat) # для корреляции нормируем ковариацию на стандартное отклонение соответствующих переменных
+)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code># если использовать вес, то там совсем все сложно становится...
+# unbias estimation в R по умолчанию
+weight_norm = weight/sum(weight) # нормализуем вес
+all.equal(
+    t(dat) %*% (dat*weight_norm)/(1-sum(weight_norm^2)),
+    cov.wt(dat,center=FALSE, wt = weight_norm,method=&quot;unbias&quot;)$cov
+    ) # очень странный делитель. Непонятно зачем там квадраты весов...</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code># однако, если maximum-likelihood, то более понятно. 
+all.equal(
+    t(dat) %*% (dat*weight)/sum(weight),
+    cov.wt(dat,center=FALSE, wt = weight,method=&quot;ML&quot;)$cov
+    ) # Чтобы считало, как в SPSS, надо делить на (sum(weight)-1)??</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>u_d_v = svd(dat)
+
+# u - </code></pre>
+<p>Для центрированного набора данных X из N наблюдений</p>
+<ol style="list-style-type: decimal">
+<li>cov(X) = X’ * X /(N-1)</li>
+<li>cov(X,вес = wt) = X’ * (Xw) /sum(w) # для метода максимального правдоподобия</li>
+<li>Корреляция - это ковариация, нормированная на стандартные отклонения соответствующих переменных</li>
+</ol>
 </div>
 
 
