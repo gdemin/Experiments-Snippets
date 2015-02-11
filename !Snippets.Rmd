@@ -140,10 +140,6 @@ all.equal(
     cov.wt(dat,center=FALSE, wt = weight,method="ML")$cov
     ) # Чтобы считало, как в SPSS, надо делить на (sum(weight)-1)??
 
-u_d_v = svd(dat)
-
-# u - 
-
 ```
 Для центрированного набора данных X из N наблюдений
 
@@ -151,6 +147,35 @@ u_d_v = svd(dat)
 2. cov(X,вес = wt) = X' * (Xw) /sum(w)  # для метода максимального правдоподобия
 3. Корреляция - это ковариация, нормированная на стандартные отклонения соответствующих переменных
 
+### допись 2015-02-11 по мотивам Trevor Hastie, Robert Tibshirani, Jerome Friedman, "Elements of statistical learning"
+
+```{r}
+
+u_d_v = svd(dat) # декомпозиция dat = u %*% d %*% t(v)
+u = u_d_v$u
+d = diag(u_d_v$d)
+v = u_d_v$v
+
+prc = prcomp(dat) # главные компоненты
+comp = predict(prc,newdata=dat) # рассчитываем их значения
+dimnames(comp) = NULL
+
+all.equal(comp,u %*% d) # да, главные компоненты - это матричное умножение UD из SVD-декомпозиции 
+x = prc$x
+dimnames(x) = NULL
+all.equal(x,u %*% d)
+
+rotation = prc$rotation
+dimnames(rotation) = NULL
+all.equal(rotation,v) # V-компонента - матрица поворота
+
+# соответсвенно, достаточно очевидно
+
+all.equal(dat %*% v, comp ) # v - исходные переменные переводит в компоненты
+all.equal(dat, comp %*% t(v),check.attributes = FALSE) # t(v) - переводит компоненты в исходные переменные
+
+
+```
 
 
 
