@@ -213,15 +213,40 @@ all.equal(
     cov.wt(dat,center=FALSE, wt = weight,method=&quot;ML&quot;)$cov
     ) # Чтобы считало, как в SPSS, надо делить на (sum(weight)-1)??</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="r"><code>u_d_v = svd(dat)
-
-# u - </code></pre>
 <p>Для центрированного набора данных X из N наблюдений</p>
 <ol style="list-style-type: decimal">
 <li>cov(X) = X’ * X /(N-1)</li>
 <li>cov(X,вес = wt) = X’ * (Xw) /sum(w) # для метода максимального правдоподобия</li>
 <li>Корреляция - это ковариация, нормированная на стандартные отклонения соответствующих переменных</li>
 </ol>
+</div>
+<div id="-2015-02-11---trevor-hastie-robert-tibshirani-jerome-friedman-elements-of-statistical-learning" class="section level3">
+<h3>допись 2015-02-11 по мотивам Trevor Hastie, Robert Tibshirani, Jerome Friedman, “Elements of statistical learning”</h3>
+<pre class="r"><code>u_d_v = svd(dat) # декомпозиция dat = u %*% d %*% t(v)
+u = u_d_v$u
+d = diag(u_d_v$d)
+v = u_d_v$v
+
+prc = prcomp(dat) # главные компоненты
+comp = predict(prc,newdata=dat) # рассчитываем их значения
+dimnames(comp) = NULL
+
+all.equal(comp,u %*% d) # да, главные компоненты - это матричное умножение UD из SVD-декомпозиции </code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>x = prc$x
+dimnames(x) = NULL
+all.equal(x,u %*% d)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>rotation = prc$rotation
+dimnames(rotation) = NULL
+all.equal(rotation,v) # V-компонента - матрица поворота</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code># соответсвенно, достаточно очевидно
+
+all.equal(dat %*% v, comp ) # v - исходные переменные переводит в компоненты</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>all.equal(dat, comp %*% t(v),check.attributes = FALSE) # t(v) - переводит компоненты в исходные переменные</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="correlation-of-r1-and-r2-is-x.-probability-of-r1-r2" class="section level3">
 <h3>2015-02-11 correlation of r1 and r2 is x. Probability of r1 &gt; r2?</h3>
@@ -379,21 +404,17 @@ summary(mod3) # нереально хороший р-квадрат</code></pre>
 </div>
 <div id="diagrammer" class="section level3">
 <h3>2015-02-11 DiagrammeR</h3>
-<p>Кириллицу мы не поддерживаем…:(</p>
+<p>Кириллицу мы не поддерживаем…:( Да и с масштабированием проблемы. И вообще странно работает.</p>
 <pre class="r"><code>library(DiagrammeR)
 
 DiagrammeR(&quot;
            graph TB;
            A{Life} --&gt;B(Family);
            A --&gt; C[Work];
-           
-           
-           
-           
            &quot;)</code></pre>
 <p><div id="htmlwidget-3346" style="width:672px;height:480px;" class="DiagrammeR"></div>
 <script type="application/json" data-for="htmlwidget-3346">{ "x": {
- "diagram": "\n           graph TB;\n           A{Life} -->B(Family);\n           A --> C[Work];\n           \n           \n           \n           \n           " 
+ "diagram": "\n           graph TB;\n           A{Life} -->B(Family);\n           A --> C[Work];\n           " 
 },"evals": [  ] }</script></p>
 </div>
 
