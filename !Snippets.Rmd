@@ -150,3 +150,103 @@ u_d_v = svd(dat)
 1. cov(X) = X' * X /(N-1)
 2. cov(X,вес = wt) = X' * (Xw) /sum(w)  # для метода максимального правдоподобия
 3. Корреляция - это ковариация, нормированная на стандартные отклонения соответствующих переменных
+
+
+
+
+### 2015-02-11 correlation of r1 and r2 is x. Probability of r1 > r2?
+
+Вопрос с crossvalidated: [correlation of r1 and r2 is x. Probability of r1 > r2?](http://stats.stackexchange.com/questions/137182/correlation-of-r1-and-r2-is-x-probability-of-r1-r2)
+
+>Just a quick probability interview question.
+>
+>If the correlation of two variables r1, r2 is x. What's the probability that a sample of r1 is greater than a sample of r2?
+>
+>let me update the question. This is what the interviewer originally asked: the stock moves every day (r1 in my model) and you have a predictor (r2 in my model) that predicts the stock return with correlation of x. You make trades according to this predictor. What's the portion of your winning trades?
+
+
+```{r}
+
+# сначала проверим процент объясненной дисперсии
+
+set.seed(20150211)
+N = 1000 # количество точек
+
+x = rnorm(N) # независимая переменная
+
+eps = rnorm(N) # ошибка
+
+y = x + eps  # у нас стандратное откклонение x равно 1, у ошибки тоже 1. Соотвсетвенно, стандартное отклонение y должно быть sqrt(2)
+
+sqrt(2)
+
+sd(y)
+
+# или, еще более вычислительный эксперимент
+
+vec_sd = replicate(10000,{sd(rnorm(N) + rnorm(N))})
+plot(density(vec_sd))
+abline(v=sqrt(2))
+t.test(vec_sd,mu=sqrt(2)) # получается все-таки иногда нестыковочка
+
+# зависимость y от x у нас объясняет половину дисперсии в y
+# r^2 = 1/2, соответсвенно корреляция должна быть равна 1/sqrt(2)
+cor(y,x)
+1/(sqrt(2))
+
+vec_cor = replicate(10000,{x = rnorm(N);cor(x,x + rnorm(N))})
+plot(density(vec_cor))
+abline(v=1/sqrt(2))
+t.test(vec_cor,mu=1/sqrt(2)) # тоже немножечко похоже на правду
+
+# Рассматриваем победу, как правильное указание направления движения
+summary(lm(y ~ x)) # как и задумывалось, коэффициент равен 1
+
+mean(sign(diff(y))==sign(diff(x))) # а вот и хрен - получается, что он очень отдаленно похож на коэффициент корреляции. Но не равен ему
+
+prediction_vec=replicate(1000,{
+    x = rnorm(N)
+    y = x + rnorm(N)
+    mean(sign(diff(y))==sign(diff(x))) # проще diff(y)*diff(x) > 0, но со знаками понятнее
+    
+})
+
+summary(prediction_vec)
+plot(density(prediction_vec))
+abline(v=1/sqrt(2)) # даже очень далек от него
+abline(v=0.75, col="blue") # а 0.75 похоже
+
+# попробуем построить зависимость
+# доля правильных предсказаний от стандартного отклонения ошибки
+
+dep_list = lapply(seq(0,10,0.1),function(eps_sd) {rowMeans(replicate(1000,{
+    x = rnorm(N)
+    y = x + rnorm(N,mean = 0, sd = eps_sd)
+    c(eps_sd, cor(x,y),
+    mean(sign(diff(y))==sign(diff(x)))) 
+    
+}))})
+
+dep_mat=as.data.frame(do.call(rbind,dep_list))
+colnames(dep_mat) = c("Error SD","Correlation","Prediction accuracy")
+plot(dep_mat[,2:3]) # тут непонятная зависимость, но на начальных этапах похожа на линейную
+mod1 = lm(`Prediction accuracy` ~ Correlation, data = dep_mat,subset=Correlation<0.8)
+abline(mod1,col="blue")
+plot(dep_mat[,1:2]) # зависимость должна быть как sqrt(1/(1+eps_sd^2)), так как квадрат корреляции - это доля объясненной вариации
+eps_sd = seq(0,10,0.1) 
+lines(eps_sd,sqrt(1/(1+eps_sd^2)),col="blue") # тютелька в тютельку:) 
+
+plot(dep_mat[,c(1,3)]) # в виде гипотезы 0.5+0.5/(1+eps_sd)
+with(dep_mat,lines(`Error SD`,0.5+0.5/(1+(`Error SD`)^1.2),col="blue")) # еле-еле похоже... подогнал кривулькой с показателем степени 1.2 - очень странно
+
+# нелинейную модель так и не удалось подогнать...
+# colnames(dep_mat)[3] = "pred"
+# nls_mat = data.frame(pred = dep_mat[,"Prediction accuracy"] + rnorm(nrow(dep_mat), sd = 0.01),Correlation = dep_mat[,"Correlation"])
+# mod2 = nls(pred ~ base + a/(d+Correlation^alfa), data = nls_mat,start=c(base=0.5,a=0.5,d=1,alfa=1))
+# а если линейную
+mod3 = lm(`Prediction accuracy` ~ I(0.5+0.5/(1+(`Error SD`)^1.2)), data = dep_mat)
+summary(mod3) # нереально хороший р-квадрат
+
+```
+
+А мораль всего этого такая - что простой ответ на этот простой вопрос я не нашел.
