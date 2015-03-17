@@ -344,18 +344,24 @@ single_experiment = function(zk_count, max_trial){
 }
 
 set.seed(123) # чтобы была воспроизводимость
+library(compiler)
+cmp_se = cmpfun(single_experiment)
 
-results =replicate(100,single_experiment(100,50)) 
+system.time({
+    results =replicate(100000,cmp_se(100,50)) 
+})
 mean(results==100) # доля успешных экспериментов 
 
-giper_results =replicate(100, mean(replicate(150,single_experiment(100,50))==100)) 
+system.time({
+    giper_results =replicate(100, mean(replicate(500,cmp_se(100,50))==100)) 
+})    
 summary(giper_results)
 quantile(giper_results, c(0.025,0.975))
 plot(density(giper_results))
 
-# для 100 раз по 5000
+# для 100 раз по 10000
 #      2.5%     97.5% 
-# 0.2930917 0.3267333 
+# 0.3031800 0.3215675
 ```
 
 
