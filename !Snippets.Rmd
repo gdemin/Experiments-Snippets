@@ -354,7 +354,7 @@ mean(results==100) # доля успешных экспериментов
 
 system.time({
     giper_results =replicate(100, mean(replicate(500,cmp_se(100,50))==100)) 
-})    
+    })    
 summary(giper_results)
 quantile(giper_results, c(0.025,0.975))
 plot(density(giper_results))
@@ -363,6 +363,52 @@ plot(density(giper_results))
 #      2.5%     97.5% 
 # 0.3031800 0.3215675
 ```
+
+### 2015-04-10 Упаковка функций в матрицу и использование их как объектов
+
+По мотивам вопроса - http://vk.com/rstatistics?w=wall-8142131_2396%2Fall
+
+Вообщем, с квазиобъектами у меня фейл тут получился...
+```{r}
+
+object_producer = function(init = NULL){
+    local({
+        function(..., set = NULL) {
+            if (!is.null(set) && !is.null(names(set))){
+                for (each in names(set)){
+                    assign(each, set[[each]], pos = 0)
+                    }
+                return(invisible(NULL))
+                }
+            gets = list(...)
+            if (length(gets)>0){
+                res = lapply(gets, function(each) {
+                    if (!exists(each, where = 0)) stop("Field ",each, " not found")
+                    get(x = each, pos = 0)
+                    })
+                return(res)
+                }
+            invisible(NULL)
+            }  
+        })
+    }
+one = object_producer()
+two = object_producer()
+
+one(set = list(a=2))
+one("a")
+
+two("a")
+
+three = object_producer()
+three("a")
+
+```
+
+
+
+
+
 
 
 
