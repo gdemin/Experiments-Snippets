@@ -369,7 +369,7 @@ plot(density(giper_results))
 По мотивам вопроса - http://vk.com/rstatistics?w=wall-8142131_2396%2Fall
 
 Вообщем, с квазиобъектами у меня фейл тут получился...
-```{r}
+#```{r}
 
 object_producer = function(init = NULL){
     local({
@@ -402,12 +402,112 @@ two("a")
 
 three = object_producer()
 three("a")
+#```
+
+### 2015-04-21 Задача про двух мудрецов и 100 чисел.
+
+http://habrahabr.ru/post/256293/
+У некоторого султана было два мудреца: Али-ибн-Вали и Вали-ибн-Али. Желая убедиться в их мудрости, султан призвал мудрецов к себе и сказал: «Я задумал два числа. Оба они целые, каждое больше единицы, но меньше ста. Я перемножил эти числа и результат сообщу Али и при этом Вали я скажу сумму этих чисел. Если вы и вправду так мудры, как о вас говорят, то сможете узнать исходные числа».
+Мудрецы задумались. Первым нарушил молчание Али.
+— Я не знаю этих чисел, — сказал он, опуская голову.
+— Я это знал, — подал голос Вали.
+— Тогда я знаю эти числа, — обрадовался Али.
+— Тогда и я знаю! — воскликнул Вали.
+И мудрецы сообщили пораженному царю задуманные им числа.
+Назовите эти числа.
+
+2015-04-26 так я её и не доделал:()
+
+```{r}
+
+library(dplyr)
+'append<-' = function(x,value) c(x,list(value))
+res = list()
+for(i in 2:99) for (j in i:99) if (i!=j) append(res) = c(first = i,second = j)
+
+numbers = as.data.frame(do.call(rbind,res))
+numbers = within(numbers, {prod = first*second
+                           sum = first+second})
+
+numbers = within(numbers, {dub_prod = duplicated(prod) | duplicated(prod, fromLast = TRUE) 
+                           dub_sum = duplicated(sum) | duplicated(sum, fromLast = TRUE)
+                           })
+
+numbers   %>% filter(dub_prod)  %>% filter(dub_sum)  %>% invisible
+
 
 ```
 
 
+### 2015-05-26 Реализция гребневой регрессии с помощью фиктивных кейсов.
+
+Взято отсюду - https://stats.stackexchange.com/questions/151304/why-is-ridge-regression-called-ridge-why-is-it-needed-and-what-happens-when/151351#151351
+
+Хочу проверить, совпадают ли результаты.
 
 
+```{r}
+
+library(MASS)
+data(longley)
+lambda = 0.01
+
+names(longley)[1] <- "y"
+lm.ridge(y ~ ., data = longley, lambda = lambda)
+
+#                         GNP    Unemployed  Armed.Forces    Population          Year      Employed 
+# -9.045258e+02  1.515219e-01  1.617130e-02  6.491346e-03 -1.159076e+00  5.519367e-01 -3.139751e-02 
+
+str(longley)
+
+dummy_cases = cbind(0,diag(sqrt(lambda),ncol(longley)-1))
+
+colnames(dummy_cases) = colnames(longley)
+new_dat = rbind(longley,dummy_cases)
+
+lm(y ~ . , data = new_dat)
+
+
+
+# в лоб не получилось, наверное, надо стандратизировать
+
+sc_new_dat = as.data.frame(rbind(scale(longley),dummy_cases))
+
+cf = coef(lm(y ~ . , data = sc_new_dat))
+
+sc_y = sd(longley$y)
+sc_x = apply(longley[,-1],2,sd)
+
+cf[-1]/sc_x*sc_y
+
+#         GNP   Unemployed Armed.Forces   Population         Year     Employed 
+#  0.148388952  0.015899148  0.006575573 -1.134680575  0.576636967 -0.020149374
+
+# похоже, но чуть-чуть отличается. Я посмотрел исходники - стандартное отклонение там по-другому считается - lдля генеральной совокупности. А зависимая переменная вообще не масштабируется.
+
+yn = c(longley$y - mean(longley$y),rep(0,ncol(longley)-1))
+sc_new_dat = as.data.frame(rbind(
+    scale(longley[,-1])*sqrt((nrow(longley)-1)/nrow(longley)),
+    dummy_cases[,-1]))
+
+cf = coef(lm(yn ~ . , data = sc_new_dat))
+sc_x = apply(longley[,-1],2,sd) * sqrt((nrow(longley)-1)/nrow(longley))
+cf[-1]/sc_x
+#         GNP   Unemployed Armed.Forces   Population         Year     Employed 
+#  0.151621630  0.016239558  0.006531201 -1.158855755  0.546248012 -0.028284208 
+# Более похоже, но чуть-чуть отличается все-равно.
+
+```
+
+Вердикт: метод можно использовать. В частности, с bigglm. Мне этого не хватало в avazu.
+
+1. Стандартизируем X
+2. Вычитаем центр из Y
+3. Добавляем дополнительные кейсы с диагональным sqrt(lambda) и нулевым Y
+4. Считаем модель
+5. Делим коэффициенты на соответсвующее стандратное отклонение 
+
+Непонятно, почему intercept не получается вычислить. И непонятно как быть с логистической регрессией - то есть какие значения в дополнительных кейсах для Y. Приходить только в голову, что добавлять двойной комплект кейсов - один с нулевым Y, другой с единичным.
 
 
 
