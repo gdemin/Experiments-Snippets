@@ -324,24 +324,26 @@ single_experiment = function(zk_count, max_trial){
     zk_num = seq_len(zk_count) # последовательно нумеруем заключенных   
     boxes = sample(zk_num) # помещаем и перемешиваем номера заключенных в коробках
     
-    zk_success = 0 # количество заключенных, которые нашли свои номера за max_trial попыток
+    zk_success = TRUE # количество заключенных, которые нашли свои номера за max_trial попыток
     
     for (zk in zk_num){ # перебираем заключенных
         box = zk # номер вскрываемого ящика 
         trial = 1 # номер попытки
+        zk_success = FALSE # успех данного зека
         # в этом цикле каждый заключенный вскрывает ящики
         while (trial <=max_trial){
             if (boxes[box] == zk){
                 # успех, он нашел свой номер
-                zk_success = zk_success + 1
+                zk_success = TRUE
                 break # дальше не пробуем
             } else {
                     box = boxes[box] # берем номер ящика, куда смотреть даальше    
             }
             trial = trial + 1
         }
+        if(!zk_success) return(zk_success) # если один не нашел, то дальше нет смысла тестировать
     }
-    zk_success # возвращаем количество заключенных, которые нашли свои номера
+    zk_success # возвращаем успешность попытки
 }
 
 set.seed(123) # чтобы была воспроизводимость
@@ -350,10 +352,13 @@ set.seed(123) # чтобы была воспроизводимость
 system.time({
     results =replicate(100000,single_experiment(100,50))  
 }) # 47.1 секунд, а в Firefox на Javascript 14.3 секунды
-mean(results==100) # доля успешных экспериментов 
+# 10.24 секунды после того, как оптимизировал - прекращал тестирование после того, как один из зеков проваливался
+# быстрее JavaScript - очень неожиданно...
+
+mean(results) # доля успешных экспериментов 
 
 system.time({
-    giper_results =replicate(100, mean(replicate(500,cmp_se(100,50))==100)) 
+    giper_results =replicate(100, mean(replicate(10000,single_experiment(100,50)))) 
     })    
 summary(giper_results)
 quantile(giper_results, c(0.025,0.975))
