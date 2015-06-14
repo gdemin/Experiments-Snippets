@@ -348,8 +348,8 @@ set.seed(123) # чтобы была воспроизводимость
 # cmp_se = cmpfun(single_experiment)
 
 system.time({
-    results =replicate(100000,single_experiment(100,50)) 
-})
+    results =replicate(100000,single_experiment(100,50))  
+}) # 47.1 секунд, а в Firefox на Javascript 14.3 секунды
 mean(results==100) # доля успешных экспериментов 
 
 system.time({
