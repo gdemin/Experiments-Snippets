@@ -314,7 +314,8 @@ DiagrammeR("
 
 ```{r}
 
-
+library(compiler)
+enableJIT(3)
 # zk_count - количеcтво заключенных
 # max_trial - количество попыток у одного заключенного
 
@@ -344,11 +345,10 @@ single_experiment = function(zk_count, max_trial){
 }
 
 set.seed(123) # чтобы была воспроизводимость
-library(compiler)
-cmp_se = cmpfun(single_experiment)
+# cmp_se = cmpfun(single_experiment)
 
 system.time({
-    results =replicate(100000,cmp_se(100,50)) 
+    results =replicate(100000,single_experiment(100,50)) 
 })
 mean(results==100) # доля успешных экспериментов 
 
