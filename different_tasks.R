@@ -205,3 +205,58 @@ eps = eps2*dev
 
 cat((p-eps)*N,(p+eps)*N,"\n")
 
+
+####  
+
+library(dplyr)
+
+x = data.frame(dat = rnorm(500))
+
+x  %>% mutate(groups = cut(dat,c(-Inf,-1,0,1,Inf)))  %>% group_by(groups)  %>% summarize(med_dat = median(dat), count = n())
+
+
+
+
+######### manipulate
+
+library(manipulate)
+f = function(t,a=6,b=2,d=4,e=14) { exp(1i*t)+exp(a*1i*t)/b+1i/d*exp(-1i*e*t)}
+manipulate(plot(Re(f(seq(0,maxt,0.01),a,b,d,e)),Im(f(seq(0,maxt,0.01),a,b,d,e)),type="l"),
+           maxt = slider(0,100,step=0.1, initial = 5),
+           a = slider(.1,20,step=0.5, initial = 6),
+           b = slider(.1,20,step=0.5, initial = 2),
+           d = slider(.1,20,step=0.5, initial = 4),
+           e = slider(.1,20,step=0.5, initial = 14)
+           )
+
+
+########## gmurman #######
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
