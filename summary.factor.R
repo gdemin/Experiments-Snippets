@@ -40,4 +40,17 @@ summary.factor(chickwts$feed)
 
 chickwts[1:3,2] = NA
 
- 
+########### нерабочий вариант
+
+summary = force(base::summary)
+summary.data.frame = force(base::summary.data.frame)
+
+summary.factor = function(object,maxsum = 100, ...){
+    res = base::summary.factor(object = object, maxsum = maxsum, ...)
+    pct = round(res/length(object)*100)
+    
+    
+    setNames(paste0(res, " ", pct, "%"),names(res))
+}
+
+summary(chickwts)
