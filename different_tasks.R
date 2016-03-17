@@ -232,24 +232,42 @@ manipulate(plot(Re(f(seq(0,maxt,0.01),a,b,d,e)),Im(f(seq(0,maxt,0.01),a,b,d,e)),
 
 ########## gmurman #######
 
+######## s4 classes ############
+
+setGeneric("my_method", function(a_number, a_string) {
+    standardGeneric("my_method")
+})
+
+setMethod("my_method", signature(a_number = "numeric", a_string = "character"), 
+          function(a_number, a_string) {
+                paste0(a_string, a_number)
+})
+
+
+my_method(1, "fsdfds")
+my_method("fsdfds", 1)
+
+
+setOldClass("superclass")
+setOldClass("fsd6fds")
+
+setMethod("my_method", signature(a_number = "superclass", a_string = "character"), 
+          function(a_number, a_string) {
+              paste0(a_string, a_number)
+          })
 
 
 
+a = "sfsdf"
+class(a) = "superclass"
 
+my_method(a, "fsd6fds")
 
+b = a
+class(b) = union("sfvsfv",class(b))
 
-
-
-
-
-
-
-
-
-
-
-
-
+my_method(b, "fsd6fds")
+my_method(1L, "fsd6fds")
 
 
 
