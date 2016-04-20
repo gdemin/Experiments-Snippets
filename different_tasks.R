@@ -269,5 +269,3 @@ class(b) = union("sfvsfv",class(b))
 my_method(b, "fsd6fds")
 my_method(1L, "fsd6fds")
 
-
-test_test
